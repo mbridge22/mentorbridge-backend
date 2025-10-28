@@ -12,21 +12,34 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// Health check route
+app.get('/', (req, res) => {
+  res.send('MentorBridge API is running!');
+});
+
 // Chat endpoint
 app.post('/chat', async (req, res) => {
   const { user_id, text } = req.body;
 
-  // Save message to Supabase
-  const { error } = await supabase
-    .from('messages')
-    .insert([{ user_id, text }]);
+  try {
+    // Save message to Supabase
+    const { error } = await supabase
+      .from('messages')
+      .insert([{ user_id, text }]);
 
-  if (error) return res.status(500).json({ error });
+    if (error) {
+      console.error('Supabase error:', error);
+      return res.status(500).json({ error });
+    }
 
-  // Dummy AI response
-  const reply = `You said: "${text}". Here's a smart reply!`;
+    // Dummy AI response
+    const reply = `You said: "${text}". Here's a smart reply!`;
+    res.json({ reply });
 
-  res.json({ reply });
+  } catch (err) {
+    console.error('Server error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
